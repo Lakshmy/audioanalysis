@@ -24,17 +24,7 @@ def main():
         analyzer_id=os.getenv("CONTENT_UNDERSTANDING_ANALYZER_ID"),
         file_location=os.getenv("AUDIO_FILE_LOCATION")
     )
-    # settings = Settings(
-    #     endpoint="https://ai-contentunderstanding-services411693943266.cognitiveservices.azure.com/",
-    #     api_version="2024-12-01-preview",
-    #     # Either subscription_key or aad_token must be provided. Subscription Key is more prioritized.
-    #     subscription_key="8bdd5b5cddd645ac81afbeadefe8a169",
-    #     aad_token="AZURE_CONTENT_UNDERSTANDING_AAD_TOKEN",
-    #     # Insert the analyzer name.
-    #     analyzer_id="audiosummarizer",
-    #     # Insert the supported file types of the analyzer.
-    #     file_location="https://postcallsummary.blob.core.windows.net/audios/Call6_mono_16k_az_apply_loan.wav",
-    # )
+
     client = AzureContentUnderstandingClient(
         settings.endpoint,
         settings.api_version,
