@@ -1,0 +1,6 @@
+__pycache__/
+.env
+# Ignore PDF files
+*.pdf
+# Ignore wav files
+*.wav
