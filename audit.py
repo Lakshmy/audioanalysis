@@ -77,8 +77,8 @@ def createauditreport(speech):
     response = completion.to_json()
     data = json.loads(response)
     report =  data["choices"][0]["message"]["content"]
-    create_and_write_pdf(report)
-    return report
+    filename = create_and_write_pdf(report)
+    return filename
 
 def create_and_write_pdf(content):
     """
@@ -110,6 +110,7 @@ def create_and_write_pdf(content):
         c.save()
         print(f"Successfully created PDF file: {filename}")
         uploadpdf.upload_pdf_to_azure(filename)
+        return filename
 
     except Exception as e:
         print(f"An error occurred while creating the PDF: {e}")
@@ -117,4 +118,5 @@ def create_and_write_pdf(content):
 if __name__ == "__main__":
     report = createauditreport("test")
     create_and_write_pdf(report)
+    
     

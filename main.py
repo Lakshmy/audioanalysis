@@ -8,8 +8,9 @@ from typing import Any, cast
 from dataclasses import dataclass
 import os
 import audit
+import uploadtofabric
 from dotenv import load_dotenv
-
+import pandas as pd
 import requests
 
 load_dotenv()
@@ -18,13 +19,13 @@ def main():
     settings = Settings(
         endpoint=os.getenv("CONTENT_UNDERSTANDING_ENDPOINT"), 
         api_version=os.getenv("CONTENT_UNDERSTANDING_API_VERSION"),
-        # Either subscription_key or aad_token must be provided. Subscription Key is more prioritized.
         subscription_key=os.getenv("CONTENT_UNDERSTANDING_SUBSCRIPTION_KEY"),
         aad_token=os.getenv("CONTENT_UNDERSTANDING_AAD_TOKEN"),
         analyzer_id=os.getenv("CONTENT_UNDERSTANDING_ANALYZER_ID"),
         file_location=os.getenv("AUDIO_FILE_LOCATION")
     )
 
+    # Step 1 - Create audio transcription using Azure Content Understanding
     client = AzureContentUnderstandingClient(
         settings.endpoint,
         settings.api_version,
@@ -37,23 +38,36 @@ def main():
         timeout_seconds=60 * 60,
         polling_interval_seconds=1,
     )
-
+    
     transcription =  result["result"]["contents"][0]["markdown"]
-    print(f"Speech to Text : {transcription}")
-    audit.createauditreport(transcription)
+    # print(f"Speech to Text : {transcription}")
+    
+    # Step 2 - Create Quality assurance report using GPT-4o using the transcription as context. 
+    # Audit file is generated as PDF file and stored in azure storage location first
+    auditfile = audit.createauditreport(transcription)
+    
+    # Step 3 - Write the transcription along with summary, sentiment analysis and paths to the audio files,
+    # Q&A report, topics of the conversation etc to Fabric in the format of parquet files for analysis 
+    df = pd.DataFrame()
+    df["audio_file_location"] = [settings.file_location]
+
+    #df["semantic_model_name"] = "TBD"
+    df["transcription"] = [transcription]
+
     fields = result["result"]["contents"][0]["fields"]
     field_values = {}
 
     for field_name, field_data in fields.items():
         if "valueString" in field_data:
-            field_values[field_name] = field_data["valueString"]
+            # field_values[field_name] = field_data["valueString"]
+            df[field_name] = [field_data["valueString"]]
         elif "valueArray" in field_data:
-            field_values[field_name] = [item["valueString"] for item in field_data["valueArray"]]
-    for name, value in field_values.items():
-        print(f"{name}: {value}")
-    
+            # field_values[field_name] = [item["valueString"] for item in field_data["valueArray"]]
+            df[field_name] = [[item["valueString"] for item in field_data["valueArray"]]]
 
-
+    print(df)
+    uploadtofabric.writetofabric(df)
+    print(f"Completed the analysis of call recording based on the audio file - {settings.file_location}")
 @dataclass(frozen=True, kw_only=True)
 class Settings:
     endpoint: str
