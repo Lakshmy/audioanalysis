@@ -5,6 +5,7 @@ There are 3 parts to this program
 1. main.py - Main file which uses the AzureContentUnderstandingClient to parse the audio file to create transcription and audio analysis
 2. audit.py - This file uses the transciption from main.py to create a quality control report based 
 3. uploadpdf.py- uploads the quality control report as pdf file to a storage blob container
+4. uploadtofabric.py - uploads the transciton and output from content understanding as parquet file in Fabric onelake
 
 To run the function --> Upload the audio file to a storage blob container and configure the name rest of the env variable in the .env file
 
